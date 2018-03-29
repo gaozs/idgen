@@ -1,4 +1,4 @@
-package uintgen
+package idgen
 
 import (
 	"testing"
@@ -25,13 +25,13 @@ func TestIDGen(t *testing.T) {
 	//test if sequence ids are same
 	now := time.Now()
 	var a, b int64
-	a, err = worker.NextInt()
+	a, err = worker.NextID()
 	if err != nil {
 		t.Fatal(err)
 	}
 	count := 0
 	for i := 0; i < batchNum; i++ {
-		b, err = worker.NextInt()
+		b, err = worker.NextID()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -58,7 +58,7 @@ func TestIDGen(t *testing.T) {
 			s := i * batchNum
 			e := s + batchNum
 			for j := s; j < e; j++ {
-				ids[j], err = worker.NextInt()
+				ids[j], err = worker.NextID()
 				if err != nil {
 					t.Fatal(err)
 				}

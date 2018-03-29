@@ -1,4 +1,4 @@
-package uintgen
+package idgen
 
 import (
 	"errors"
@@ -27,18 +27,18 @@ const (
 // for reduce ms part
 var baseMs = time.Date(2010, 9, 13, 12, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond)
 
-type UIntGenWorker interface {
-	NextInt() (i int64, err error)
+type IDGenWorker interface {
+	NextID() (i int64, err error)
 }
 
-type uIntGenWork struct {
+type idGenWork struct {
 	nodeMask int64
 	lastMs   int64
 	count    int64
-	lock     sync.Mutex
+	l        sync.Mutex
 }
 
-func NewWorker(nodeid int) (worker UIntGenWorker, err error) {
+func NewWorker(nodeid int) (worker IDGenWorker, err error) {
 	if nodeid < 0 || nodeid > MaxNodeID {
 		err = errors.New("Node id is not allowed!")
 		return
@@ -46,37 +46,35 @@ func NewWorker(nodeid int) (worker UIntGenWorker, err error) {
 
 	time.Sleep(time.Millisecond) // ensure program restart from crash is safe
 
-	w := new(uIntGenWork)
+	w := new(idGenWork)
 	w.nodeMask = int64(nodeid) << nodeIDShift
 
 	worker = w
 	return
 }
 
-func (worker *uIntGenWork) NextInt() (i int64, err error) {
-	worker.lock.Lock()
-	defer worker.lock.Unlock()
+func (work *idGenWork) NextID() (i int64, err error) {
+	work.l.Lock()
+	defer work.l.Unlock()
 
 	ms := getNowMs()
-	if ms < worker.lastMs {
+	if ms < work.lastMs {
 		err = errors.New("time error, now is before last time")
-	}
-	if ms > worker.lastMs {
-		i = firstBitMask & ((ms-baseMs)<<msShift | worker.nodeMask)
-		worker.lastMs = ms
-		worker.count = 1
 		return
 	}
-
-	worker.count &= sequenceMask
-	if worker.count == 0 {
-		for ms == worker.lastMs {
-			ms = getNowMs()
+	if ms > work.lastMs {
+		work.count = 0
+		work.lastMs = ms
+	} else {
+		work.count &= sequenceMask
+		if work.count == 0 {
+			for work.lastMs == ms {
+				work.lastMs = getNowMs()
+			}
 		}
-		worker.lastMs = ms
 	}
-	i = firstBitMask & ((ms-baseMs)<<msShift | worker.nodeMask | worker.count)
-	worker.count++
+	i = firstBitMask & ((ms-baseMs)<<msShift | work.nodeMask | work.count)
+	work.count++
 	return
 }
 
