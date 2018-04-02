@@ -6,48 +6,81 @@ import (
 	"time"
 )
 
-// 0-13  bit: 14 bits are serial number
-// 14-18 bit: 5 bits are node id
-// 19-62 bit: 44 bits are ms
+// 0-sequenceBits-1  bit: sequenceBits bits are serial number
+// sequenceBits-nodeIDBits-1 bit: nodeIDBits bits are node id
+// nodeIDBits-62 bit: 63-nodeIDBits-sequenceBits bits are ms
 // 63    bit: is always 0
 
-const (
-	sequenceBits = 14
-	nodeIDBits   = 5
-
-	MaxNodeID = 1<<nodeIDBits - 1
-
-	nodeIDShift = sequenceBits
-	msShift     = sequenceBits + nodeIDBits
-
-	sequenceMask = int64(1<<sequenceBits - 1)
-	firstBitMask = int64(uint64(1)<<63 - 1)
-)
+// to ensure first bit is 0
+const firstBitMask = int64(uint64(1)<<63 - 1)
 
 // for reduce ms part
 var baseMs = time.Date(2010, 9, 13, 12, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond)
 
 type IDGenWorker interface {
 	NextID() (i int64, err error)
+	MaxNodeID() (maxNodeID int)
 }
 
 type idGenWork struct {
-	nodeMask int64
-	lastMs   int64
-	count    int64
-	l        sync.Mutex
+	// copnfig info
+	sequenceBits int // must >=12
+	nodeIDBits   int // must >=4
+	nodeID       int // must not great than maxnode based nodeIDBits
+
+	// based on config info for gen id
+	sequenceMask int64
+	nodeMask     int64
+	msShift      uint
+	maxNodeID    int
+
+	// used to gen id
+	lastMs int64
+	count  int64
+	l      sync.Mutex
 }
 
-func NewWorker(nodeid int) (worker IDGenWorker, err error) {
-	if nodeid < 0 || nodeid > MaxNodeID {
-		err = errors.New("Node id is not allowed!")
+// sequenceBits must >=12 and nodeIDBits must >=4
+// sequenceBits+nodeIDBits must <= 20 (which mean ms has 43bit+, totally has about 278+ years range)
+// sequenceBits,nodeIDBits can be 0,default value will be 14,5
+func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker IDGenWorker, err error) {
+	if sequenceBits == 0 {
+		sequenceBits = 14
+	}
+	if nodeIDBits == 0 {
+		nodeIDBits = 5
+	}
+
+	if sequenceBits < 12 {
+		err = errors.New("sequenceBits is not allowed. Must >= 12!")
+		return
+	}
+	if nodeIDBits < 4 {
+		err = errors.New("nodeIDBits is not allowed. Must >= 4!")
+		return
+	}
+	if sequenceBits+nodeIDBits > 20 {
+		err = errors.New("sequenceBits+nodeIDBits is not allowed. Must <= 20!")
+		return
+	}
+	if nodeID < 0 || nodeID > (1<<uint(nodeIDBits)-1) {
+		err = errors.New("Node id is not allowed! Less than 0 or great then max nodes")
 		return
 	}
 
-	time.Sleep(time.Millisecond) // ensure program restart from crash is safe
+	// ensure program restart from last crash is safe
+	time.Sleep(time.Millisecond)
 
 	w := new(idGenWork)
-	w.nodeMask = int64(nodeid) << nodeIDShift
+
+	w.sequenceBits = sequenceBits
+	w.nodeIDBits = nodeIDBits
+	w.nodeID = nodeID
+
+	w.sequenceMask = 1<<uint(sequenceBits) - 1
+	w.nodeMask = int64(nodeID) << uint(sequenceBits)
+	w.msShift = uint(sequenceBits + nodeIDBits)
+	w.maxNodeID = 1<<uint(nodeIDBits) - 1
 
 	worker = w
 	return
@@ -62,19 +95,28 @@ func (work *idGenWork) NextID() (i int64, err error) {
 		err = errors.New("time error, now is before last time")
 		return
 	}
+
 	if ms > work.lastMs {
+		// new ms
 		work.count = 0
 		work.lastMs = ms
 	} else {
-		work.count &= sequenceMask
+		work.count &= work.sequenceMask
 		if work.count == 0 {
+			// over count limit, wait for next ms and set work.lastms
 			for work.lastMs == ms {
 				work.lastMs = getNowMs()
 			}
 		}
 	}
-	i = firstBitMask & ((ms-baseMs)<<msShift | work.nodeMask | work.count)
+	i = firstBitMask & ((((ms - baseMs) << work.msShift) | work.nodeMask) | work.count)
 	work.count++
+	return
+}
+func (work *idGenWork) MaxNodeID() (maxNodeID int) {
+	if work != nil {
+		maxNodeID = work.maxNodeID
+	}
 	return
 }
 

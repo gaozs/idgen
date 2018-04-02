@@ -6,18 +6,23 @@ import (
 )
 
 func TestIDGen(t *testing.T) {
-	worker, err := NewWorker(MaxNodeID + 1)
+	worker, err := NewWorker(18, 0, 0)
 	if err == nil {
-		t.Error(MaxNodeID, "should not pass!")
+		t.Error(18, 0, 0, "should not pass!")
+	} else {
+		t.Log(18, 0, 0, "Not pass!", err)
 	}
-	worker, err = NewWorker(-100)
+	worker, err = NewWorker(0, 9, 0)
 	if err == nil {
-		t.Error("-100 should not pass!")
+		t.Error(0, 9, 0, "should not pass!")
+	} else {
+		t.Log(0, 9, 0, "Not pass!", err)
 	}
-	worker, err = NewWorker(MaxNodeID)
+	worker, err = NewWorker(0, 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log("Max ID:", worker.MaxNodeID())
 
 	batchNum := 1000000
 	n := 10
@@ -26,6 +31,7 @@ func TestIDGen(t *testing.T) {
 	now := time.Now()
 	var a, b int64
 	a, err = worker.NextID()
+	t.Log("first id:", a)
 	if err != nil {
 		t.Fatal(err)
 	}
