@@ -18,7 +18,7 @@ func TestIDGen(t *testing.T) {
 	} else {
 		t.Log(0, 9, 0, "Not pass!", err)
 	}
-	worker, err = NewWorker(0, 0, 0)
+	worker, err = NewWorker(0, 1, 0)
 	if err != nil {
 		t.Fatal(err)
 	}

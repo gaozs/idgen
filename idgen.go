@@ -25,7 +25,7 @@ type IDGenWorker interface {
 type idGenWork struct {
 	// copnfig info
 	sequenceBits int // must >=12
-	nodeIDBits   int // must >=4
+	nodeIDBits   int // must >=1
 	nodeID       int // must not great than maxnode based nodeIDBits
 
 	// based on config info for gen id
@@ -40,7 +40,7 @@ type idGenWork struct {
 	l      sync.Mutex
 }
 
-// sequenceBits must >=12 and nodeIDBits must >=4
+// sequenceBits must >=12 and nodeIDBits must >=1
 // sequenceBits+nodeIDBits must <= 20 (which mean ms has 43bit+, totally has about 278+ years range)
 // sequenceBits,nodeIDBits can be 0,default value will be 14,5
 func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker IDGenWorker, err error) {
@@ -55,8 +55,8 @@ func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker IDGenWorker, err er
 		err = errors.New("sequenceBits is not allowed. Must >= 12!")
 		return
 	}
-	if nodeIDBits < 4 {
-		err = errors.New("nodeIDBits is not allowed. Must >= 4!")
+	if nodeIDBits < 1 {
+		err = errors.New("nodeIDBits is not allowed. Must >= 1!")
 		return
 	}
 	if sequenceBits+nodeIDBits > 20 {
