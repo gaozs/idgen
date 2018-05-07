@@ -19,11 +19,12 @@ var baseMs = time.Date(2010, 9, 13, 12, 0, 0, 0, time.UTC).UnixNano() / int64(ti
 
 type IDGenWorker interface {
 	NextID() (i int64, err error)
+	NextIDMust() (i int64)
 	MaxNodeID() (maxNodeID int)
 }
 
 type idGenWork struct {
-	// copnfig info
+	// config info
 	sequenceBits int // must >=12
 	nodeIDBits   int // must >=1
 	nodeID       int // must not great than maxnode based nodeIDBits
@@ -37,7 +38,7 @@ type idGenWork struct {
 	// used to gen id
 	lastMs int64
 	count  int64
-	l      sync.Mutex
+	sync.Mutex
 }
 
 // sequenceBits must >=12 and nodeIDBits must >=1
@@ -86,9 +87,18 @@ func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker IDGenWorker, err er
 	return
 }
 
+func (work *idGenWork) NextIDMust() (i int64) {
+	var err error
+	i, err = work.NextID()
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
 func (work *idGenWork) NextID() (i int64, err error) {
-	work.l.Lock()
-	defer work.l.Unlock()
+	work.Lock()
+	defer work.Unlock()
 
 	ms := getNowMs()
 	if ms < work.lastMs {
@@ -113,6 +123,7 @@ func (work *idGenWork) NextID() (i int64, err error) {
 	work.count++
 	return
 }
+
 func (work *idGenWork) MaxNodeID() (maxNodeID int) {
 	if work != nil {
 		maxNodeID = work.maxNodeID
