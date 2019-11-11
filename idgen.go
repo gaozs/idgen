@@ -17,6 +17,7 @@ const firstBitMask = int64(uint64(1)<<63 - 1)
 // for reduce ms part
 var baseMs = time.Date(2010, 9, 13, 12, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond)
 
+// IDGenWorker defines a worker
 type IDGenWorker interface {
 	NextID() (i int64, err error)
 	NextIDMust() (i int64)
@@ -41,6 +42,7 @@ type idGenWork struct {
 	sync.Mutex
 }
 
+// NewWorker generate a new worker
 // sequenceBits must >=12 and nodeIDBits must >=1
 // sequenceBits+nodeIDBits must <= 20 (which mean ms has 43bit+, totally has about 278+ years range)
 // sequenceBits,nodeIDBits can be 0,default value will be 14,5
@@ -53,15 +55,15 @@ func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker IDGenWorker, err er
 	}
 
 	if sequenceBits < 12 {
-		err = errors.New("sequenceBits is not allowed. Must >= 12!")
+		err = errors.New("sequenceBits is not allowed. Must >= 12")
 		return
 	}
 	if nodeIDBits < 1 {
-		err = errors.New("nodeIDBits is not allowed. Must >= 1!")
+		err = errors.New("nodeIDBits is not allowed. Must >= 1")
 		return
 	}
 	if sequenceBits+nodeIDBits > 20 {
-		err = errors.New("sequenceBits+nodeIDBits is not allowed. Must <= 20!")
+		err = errors.New("sequenceBits+nodeIDBits is not allowed. Must <= 20")
 		return
 	}
 	if nodeID < 0 || nodeID > (1<<uint(nodeIDBits)-1) {
