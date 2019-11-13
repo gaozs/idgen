@@ -115,10 +115,11 @@ func (work *idGenWork) NextID() (i int64, err error) {
 	} else {
 		work.count &= work.sequenceMask
 		if work.count == 0 {
-			// over count limit, wait for next ms and set work.lastms
+			// over count limit, wait for next ms and set ms&work.lastms
 			for work.lastMs == ms {
-				work.lastMs = getNowMs()
+				ms = getNowMs()
 			}
+			work.lastMs = ms
 		}
 	}
 	i = firstBitMask & ((((ms - baseMs) << work.msShift) | work.nodeMask) | work.count)
