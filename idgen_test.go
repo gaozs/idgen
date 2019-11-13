@@ -24,7 +24,7 @@ func TestIDGen(t *testing.T) {
 	}
 	t.Log("Max ID:", worker.MaxNodeID())
 
-	batchNum := 10000000
+	batchNum := 1000000
 	n := 10
 
 	//test if sequence ids are same
@@ -86,4 +86,7 @@ func TestIDGen(t *testing.T) {
 		m[ids[i]] = true
 	}
 	t.Log("checked", n, "*", batchNum, "ids with repeated:", count)
+	if count > 0 {
+		t.Fatal("ID dupilicated!")
+	}
 }
