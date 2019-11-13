@@ -17,7 +17,7 @@ const firstBitMask = int64(uint64(1)<<63 - 1)
 // for reduce ms part
 var baseMs = time.Date(2010, 9, 13, 12, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond)
 
-// IDGenWorker defines a worker
+// IDGenWorker to generate IDs
 type IDGenWorker interface {
 	NextID() (i int64, err error)
 	NextIDMust() (i int64)
