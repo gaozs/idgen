@@ -14,7 +14,7 @@ import (
 // to ensure first bit is 0
 const firstBitMask = int64(uint64(1)<<63 - 1)
 
-// for reduce ms part
+// for reduce ms part, worker server time must after this base time(2010-9-13 12:00pm UTC)
 var baseMs = time.Date(2010, 9, 13, 12, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond)
 
 // IDGenWorker to generate IDs
@@ -46,6 +46,7 @@ type idGenWork struct {
 // sequenceBits must >=12 and nodeIDBits must >=1
 // sequenceBits+nodeIDBits must <= 20 (which mean ms has 43bit+, totally has about 278+ years range)
 // sequenceBits,nodeIDBits can be 0,default value will be 14,5
+// nodeID is the caller's ID, from 0 to 2^nodeIDBits-1
 func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker IDGenWorker, err error) {
 	if sequenceBits == 0 {
 		sequenceBits = 14
@@ -105,6 +106,10 @@ func (work *idGenWork) NextID() (i int64, err error) {
 	ms := getNowMs()
 	if ms < work.lastMs {
 		err = errors.New("time error, now is before last time")
+		return
+	}
+	if ms < baseMs {
+		err = errors.New("time error, now is before base time(2010-9-13 12:00pm UTC)")
 		return
 	}
 
