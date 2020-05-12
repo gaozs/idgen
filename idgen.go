@@ -103,7 +103,7 @@ func (work *idGenWork) NextID() (i int64, err error) {
 	work.Lock()
 	defer work.Unlock()
 
-	ms := getNowMs()
+	ms := time.Now().UnixNano() / int64(time.Millisecond)
 	if ms < work.lastMs {
 		err = errors.New("time error, now is before last time")
 		return
@@ -122,7 +122,7 @@ func (work *idGenWork) NextID() (i int64, err error) {
 		if work.count == 0 {
 			// over count limit, wait for next ms and set ms&work.lastms
 			for work.lastMs == ms {
-				ms = getNowMs()
+				ms = time.Now().UnixNano() / int64(time.Millisecond)
 			}
 			work.lastMs = ms
 		}
@@ -137,8 +137,4 @@ func (work *idGenWork) MaxNodeID() (maxNodeID int) {
 		maxNodeID = work.maxNodeID
 	}
 	return
-}
-
-func getNowMs() int64 {
-	return time.Now().UnixNano() / int64(time.Millisecond)
 }
