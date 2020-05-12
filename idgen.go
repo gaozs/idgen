@@ -17,8 +17,8 @@ const firstBitMask = int64(uint64(1)<<63 - 1)
 // for reduce ms part, worker server time must after this base time(2010-9-13 12:00pm UTC)
 var baseMs = time.Date(2010, 9, 13, 12, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond)
 
-// IDGenWorker to generate IDs
-type IDGenWorker interface {
+// Worker which generates IDs
+type Worker interface {
 	NextID() (i int64, err error)
 	NextIDMust() (i int64)
 	MaxNodeID() (maxNodeID int)
@@ -47,7 +47,7 @@ type idGenWork struct {
 // sequenceBits+nodeIDBits must <= 20 (which mean ms has 43bit+, totally has about 278+ years range)
 // sequenceBits,nodeIDBits can be 0,default value will be 14,5
 // nodeID is the caller's ID, from 0 to 2^nodeIDBits-1
-func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker IDGenWorker, err error) {
+func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker Worker, err error) {
 	if sequenceBits == 0 {
 		sequenceBits = 14
 	}
