@@ -105,8 +105,14 @@ func (work *idGenWork) NextID() (i int64, err error) {
 
 	ms := time.Now().UnixNano() / int64(time.Millisecond)
 	if ms < work.lastMs {
-		err = errors.New("time error, now is before last time")
-		return
+		if work.lastMs-ms <= 200 {
+			// to handle time adjust within 200ms
+			time.Sleep(time.Duration(work.lastMs - ms))
+			ms = time.Now().UnixNano() / int64(time.Millisecond)
+		} else {
+			err = errors.New("time error, now is before last time")
+			return
+		}
 	}
 	if ms < baseMs {
 		err = errors.New("time error, now is before base time(2010-9-13 12:00pm UTC)")
