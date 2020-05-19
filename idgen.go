@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-// 0-sequenceBits-1  bit: sequenceBits bits are serial number
-// sequenceBits-nodeIDBits-1 bit: nodeIDBits bits are node id
-// nodeIDBits-62 bit: 63-nodeIDBits-sequenceBits bits are ms
-// 63    bit: is always 0
+// bit 0 to next sequenceBits-1 bit: serial number length
+// bit sequenceBits to next nodeIDBits-1 bit: node id length
+// bit sequenceBits+nodeIDBits to bit 62: ms length
+// bit 63: always 0
 
 // to ensure first bit is 0
 const firstBitMask = int64(uint64(1)<<63 - 1)
@@ -47,7 +47,7 @@ type idGenWork struct {
 // sequenceBits+nodeIDBits must <= 20 (which mean ms has 43bit+, totally has about 278+ years range)
 // sequenceBits,nodeIDBits can be 0,default value will be 14,5
 // nodeID is the caller's ID, from 0 to 2^nodeIDBits-1
-func NewWorker(sequenceBits, nodeIDBits, nodeID int) (worker Worker, err error) {
+func NewWorker(nodeID, sequenceBits, nodeIDBits int) (worker Worker, err error) {
 	if sequenceBits == 0 {
 		sequenceBits = 14
 	}

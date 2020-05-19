@@ -6,19 +6,19 @@ import (
 )
 
 func TestIDGen(t *testing.T) {
-	worker, err := NewWorker(18, 0, 0)
+	worker, err := NewWorker(0, 18, 0)
 	if err == nil {
 		t.Error(18, 0, 0, "should not pass!")
 	} else {
 		t.Log(18, 0, 0, "Not pass!", err)
 	}
-	worker, err = NewWorker(0, 9, 0)
+	worker, err = NewWorker(0, 0, 9)
 	if err == nil {
 		t.Error(0, 9, 0, "should not pass!")
 	} else {
 		t.Log(0, 9, 0, "Not pass!", err)
 	}
-	worker, err = NewWorker(14, 1, 0)
+	worker, err = NewWorker(0, 14, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
