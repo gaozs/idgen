@@ -43,10 +43,10 @@ type idGenWork struct {
 }
 
 // NewWorker generate a new worker
+// nodeID is the caller's ID, from 0 to 2^nodeIDBits-1
 // sequenceBits must >=12 and nodeIDBits must >=1
 // sequenceBits+nodeIDBits must <= 20 (which mean ms has 43bit+, totally has about 278+ years range)
 // sequenceBits,nodeIDBits can be 0,default value will be 14,5
-// nodeID is the caller's ID, from 0 to 2^nodeIDBits-1
 func NewWorker(nodeID, sequenceBits, nodeIDBits int) (worker Worker, err error) {
 	if sequenceBits == 0 {
 		sequenceBits = 14
