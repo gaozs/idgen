@@ -56,7 +56,7 @@ func TestIDGen(t *testing.T) {
 	//fulltest if ids are same
 	now = time.Now()
 	ids := make([]int64, batchNum*n)
-	ch := make(chan int)
+	ch := make(chan error)
 
 	for i := 0; i < n; i++ {
 		go func(i int) {
@@ -66,14 +66,18 @@ func TestIDGen(t *testing.T) {
 			for j := s; j < e; j++ {
 				ids[j], err = worker.NextID()
 				if err != nil {
-					t.Fatal(err)
+					ch <- err
+					return
 				}
 			}
-			ch <- 1
+			ch <- nil
 		}(i)
 	}
 	for i := 0; i < n; i++ {
-		<-ch
+		err := <-ch
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 	t.Log("get", n, "*", batchNum, "ids used:", time.Since(now))
 	m := make(map[int64]bool, batchNum*n)
