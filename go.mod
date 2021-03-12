@@ -1,3 +1,3 @@
-module gitee.com/gaozhisheng/idgen
+module gaozs.ddns.net/go/idgen
 
 go 1.16
