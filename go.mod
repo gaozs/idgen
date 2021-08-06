@@ -1,3 +1,3 @@
-module cloudgao.vicp.net/go/util/idgen
+module github.com/go-idgen
 
 go 1.16
